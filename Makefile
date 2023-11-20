@@ -19,7 +19,8 @@ check-generate:
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath
+	goreleaser build --clean --snapshot --single-target
+	cp -p dist/testhttpserver_$(shell go env GOOS)_$(shell go env GOARCH)_v1/* .
 
 .PHONY: install
 install:
