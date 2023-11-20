@@ -1,18 +1,5 @@
 .PHONY: all
-all: help
-
-## General
-
-.PHONY: help
-help:
-	@echo "Choose one of the following target"
-	@echo
-	@echo "  fmt            Run go fmt against code."
-	@echo "  vet            Run go vet against code."
-	@echo "  build          Build all binaries."
-	@echo "  install        Install all binaries."
-	@echo "  setup          Install tools for development."
-	@echo
+all: build
 
 .PHONY: fmt
 fmt:
@@ -24,6 +11,11 @@ lint:
 	staticcheck ./...
 	go vet ./...
 	goreleaser check
+
+.PHONY: check-generate
+check-generate:
+	go mod tidy
+	git diff --exit-code --name-only
 
 .PHONY: build
 build:
