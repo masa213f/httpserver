@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -23,6 +24,7 @@ var (
 	hostname bool
 	bindAddr string
 	rootDir  string
+	prefix   string
 )
 
 func init() {
@@ -31,6 +33,7 @@ func init() {
 Options:
   -addr             listen address and port
   -dir              root dir of file server
+  -prefix
   -hello
   -hostname
   -h, -help         display this help and exit
@@ -40,6 +43,7 @@ Options:
 	flag.BoolVar(&hostname, "hostname", false, "")
 	flag.StringVar(&bindAddr, "addr", ":8080", "")
 	flag.StringVar(&rootDir, "dir", ".", "")
+	flag.StringVar(&prefix, "prefix", "/", "")
 }
 
 func main() {
@@ -60,11 +64,9 @@ func main() {
 		if text == "" {
 			text = "hello"
 		}
-		mux := http.NewServeMux()
-		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, text)
 		})
-		handler = mux
 		log.Info("run as hello server", slog.String("text", text))
 
 	case hostname:
@@ -73,14 +75,16 @@ func main() {
 			log.Error("failed to get hostname", "error", err)
 			os.Exit(1)
 		}
-		mux := http.NewServeMux()
-		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, name)
 		})
-		handler = mux
 		log.Info("run as hostname server", slog.String("hostname", name))
 
 	default:
+		if !strings.HasPrefix(prefix, "/") || !strings.HasSuffix(prefix, "/") {
+			log.Error("prefix should have heading and trailing slash(/)")
+			os.Exit(1)
+		}
 		abspath, err := filepath.Abs(rootDir)
 		if err != nil {
 			log.Error("failed to get absolute path", "error", err)
@@ -90,7 +94,10 @@ func main() {
 		log.Info("run as file server", slog.String("root_dir", abspath))
 	}
 
-	server := &http.Server{Addr: bindAddr, Handler: loggerHandler(log, handler)}
+	mux := http.NewServeMux()
+	mux.Handle(prefix, http.StripPrefix(prefix, handler))
+
+	server := &http.Server{Addr: bindAddr, Handler: loggerHandler(log, mux)}
 	errCh := make(chan error)
 	go func() {
 		errCh <- server.ListenAndServe()
