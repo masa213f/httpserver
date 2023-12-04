@@ -20,7 +20,7 @@ check-generate:
 .PHONY: build
 build:
 	goreleaser build --clean --snapshot --single-target
-	cp -p dist/testhttpserver_$(shell go env GOOS)_$(shell go env GOARCH)_v1/* .
+	cp -p dist/httpserver_$(shell go env GOOS)_$(shell go env GOARCH)_v1/* .
 
 .PHONY: install
 install:
@@ -28,7 +28,7 @@ install:
 
 .PHONY: clean
 clean:
-	rm -rf dist testhttpserver
+	rm -rf dist httpserver
 
 .PHONY: release-build
 release-build:

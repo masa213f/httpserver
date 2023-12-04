@@ -28,7 +28,7 @@ var (
 )
 
 func init() {
-	const usage = `Usage: testhttpserver
+	const usage = `Usage: httpserver
 
 Options:
   -addr             listen address and port

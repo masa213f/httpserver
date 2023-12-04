@@ -1,4 +1,4 @@
-module github.com/masa213f/testhttpserver
+module github.com/masa213f/httpserver
 
 go 1.21
 
